@@ -62,45 +62,70 @@ class MenuButtonActions {
   setFocusToMenuitem(newMenuitem) {
     this.menuitemNodes.forEach(function (item) {
 // TOUFIC'S COMMENT: Placeholder for the roving tabindex logic  ;)
+    item.setAttribute("tabindex", "0"); 
     });
   }
 
   setFocusToFirstMenuitem() {
-    this.setFocusToMenuitem(this.firstMenuitem);
+    this.setFocusToMenuitem(this.firstMenuitem.focus());
   }
 
   setFocusToLastMenuitem() {
-    this.setFocusToMenuitem(this.lastMenuitem);
+    this.setFocusToMenuitem(this.lastMenuitem.focus());
   }
 
   setFocusToPreviousMenuitem(currentMenuitem) {
-    var newMenuitem, index;
 
-    if (currentMenuitem === this.firstMenuitem) {
-      newMenuitem = this.lastMenuitem;
-    } else {
-      index = this.menuitemNodes.indexOf(currentMenuitem);
-      newMenuitem = this.menuitemNodes[index - 1];
+    // Get the currently focused item
+    const currentItem = document.activeElement;
+  
+    // Find the index of the current item
+    const currentIndex = Array.from(this.menuitemNodes).indexOf(currentItem);
+  
+    // If the current item is not the first one, focus the previous item; otherwise, focus the last item
+    if (currentIndex !== -1) {
+      // Set tabindex -1 for the current item if it's not active
+      if (currentItem !== document.activeElement) {
+        currentItem.setAttribute('tabindex', '-1');
+      }
+  
+      const nextIndex = currentIndex === 0 ? this.menuitemNodes.length - 1 : currentIndex - 1;
+  
+      // Focus the next item
+      this.menuitemNodes[nextIndex].focus();
+  
+      // Set tabindex to 0 for the newly focused item (or adjust as needed)
+      this.menuitemNodes[nextIndex].setAttribute('tabindex', '0');
     }
-
-    this.setFocusToMenuitem(newMenuitem);
-
-    return newMenuitem;
   }
+  
 
   setFocusToNextMenuitem(currentMenuitem) {
-    var newMenuitem, index;
 
-    if (currentMenuitem === this.lastMenuitem) {
-      newMenuitem = this.firstMenuitem;
-    } else {
-      index = this.menuitemNodes.indexOf(currentMenuitem);
-      newMenuitem = this.menuitemNodes[index + 1];
+    // Get the currently focused item
+    const currentItem = document.activeElement;
+  
+    // Find the index of the current item
+    const currentIndex = Array.from(this.menuitemNodes).indexOf(currentItem);
+  
+    // If the current item is not the last one, focus the next item
+    if (currentIndex !== -1) {
+      // Set tabindex -1 for the current item if it's not active
+      if (currentItem !== document.activeElement) {
+        currentItem.setAttribute('tabindex', '-1');
+      }
+  
+      // If it's the last item, go back to the first item
+      const nextIndex = currentIndex < this.menuitemNodes.length - 1 ? currentIndex + 1 : 0;
+  
+      // Focus the next item
+      this.menuitemNodes[nextIndex].focus();
+  
+      // Set tabindex to 0 for the newly focused item (or adjust as needed)
+      this.menuitemNodes[nextIndex].setAttribute('tabindex', '0');
     }
-    this.setFocusToMenuitem(newMenuitem);
-
-    return newMenuitem;
   }
+  
 
   setFocusByFirstCharacter(currentMenuitem, char) {
     var start, index;
@@ -170,17 +195,33 @@ class MenuButtonActions {
     this.domNode.classList.remove('focus');
   }
 
+// done
 //This method is triggered when a keydown event occurs on the menu button.
-
 
   onButtonKeydown(event) {
     var key = event.key,
       flag = false;
 
     switch (key) {
+
       case ' ':
+        this.openPopup();
+        this.setFocusToFirstMenuitem();
+        flag = true;
+        break;
+
       case 'Enter':
+        this.openPopup();
+        this.setFocusToFirstMenuitem();
+        flag = true;
+        break;
+
       case 'ArrowDown':
+        this.openPopup();
+        this.setFocusToFirstMenuitem();
+        flag = true;
+        break;
+        
       case 'Down':
         this.openPopup();
         this.setFocusToFirstMenuitem();
@@ -188,6 +229,10 @@ class MenuButtonActions {
         break;
 
       case 'Esc':
+        this.closePopup();
+        flag = true;
+        break;
+        
       case 'Escape':
         this.closePopup();
         flag = true;
@@ -225,6 +270,8 @@ class MenuButtonActions {
 
 // This method is triggered when a keydown event occurs on a menu item.
 
+// ditogar
+
   onMenuitemKeydown(event) {
     var tgt = event.currentTarget,
       key = event.key,
@@ -251,7 +298,14 @@ class MenuButtonActions {
       }
     } else {
       switch (key) {
+        
         case ' ':
+          this.closePopup();
+          this.performMenuAction(tgt);
+          this.buttonNode.focus();
+          flag = true;
+          break;
+
         case 'Enter':
           this.closePopup();
           this.performMenuAction(tgt);
@@ -260,6 +314,11 @@ class MenuButtonActions {
           break;
 
         case 'Esc':
+          this.closePopup();
+          this.buttonNode.focus();
+          flag = true;
+          break;
+
         case 'Escape':
           this.closePopup();
           this.buttonNode.focus();
@@ -267,24 +326,40 @@ class MenuButtonActions {
           break;
 
         case 'Up':
+          this.setFocusToPreviousMenuitem(tgt);
+          flag = true;
+          break;
+
         case 'ArrowUp':
           this.setFocusToPreviousMenuitem(tgt);
           flag = true;
           break;
 
         case 'ArrowDown':
+          this.setFocusToNextMenuitem(tgt);
+          flag = true;
+          break;
+          
         case 'Down':
           this.setFocusToNextMenuitem(tgt);
           flag = true;
           break;
 
         case 'Home':
+          this.setFocusToFirstMenuitem();
+          flag = true;
+          break;
+
         case 'PageUp':
           this.setFocusToFirstMenuitem();
           flag = true;
           break;
 
         case 'End':
+          this.setFocusToLastMenuitem();
+          flag = true;
+          break;
+
         case 'PageDown':
           this.setFocusToLastMenuitem();
           flag = true;
