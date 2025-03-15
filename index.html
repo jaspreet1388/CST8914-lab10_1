@@ -1,164 +1,79 @@
-
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>Focus</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessible Menu with Roving Tabindex</title>
     <style>
-        .menu-button-actions {
-            position: relative;
-        }
-
-        #menu1 {
-            position: absolute;
-            background: white;
-            border: 1px solid #ccc;
-            padding: 10px;
+        /* Basic styles for menu */
+        .menu {
             list-style: none;
-            margin: 0;
+            padding: 0;
+            margin: 10px 0;
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            width: 200px;
         }
-
-        #menu1 li {
-            padding: 5px;
-        }
-
-        #menu1 li:focus {
-            outline: 2px solid blue;
-            background-color: #f0f0f0;
-        }
-
-        button {
+        .menu li {
+            padding: 10px;
             cursor: pointer;
+        }
+        .menu li:focus {
+            background: #ddd;
+            outline: none;
         }
     </style>
 </head>
 <body>
-    <main>
-        <h1>Managing Keyboard Focus</h1>
-        <p>Instructions: Use 'up & down arrow keys' to navigate between menu items, 'enter' to activate menu item, 'escape' key to close menu.</p>
-        <h2>What to do:</h2>
-        <p>Apply roving index technique to programmatically manage the keyboard focus on the menu (on keys arrow up and down).</p>
-        <div class="menu-button-actions">
-            <p>
-                <label>Pizza Choice:<br> <input class="action" id="action_output" type="text" value=""></label>
-            </p>
-            <button type="button" id="menubutton1" aria-haspopup="true" aria-controls="menu1">
-                Pizza Menu
-                <svg xmlns="http://www.w3.org/2000/svg" class="down" width="12" height="9" viewBox="0 0 12 9">
-                    <polygon points="1 0, 11 0, 6 8"></polygon>
-                </svg>
-            </button>
-            
-            <ul id="menu1" role="menu" aria-labelledby="menubutton1">
-                <li role="menuitem" tabindex="-1">Pizza 1</li>
-                <li role="menuitem" tabindex="-1">Pizza 2</li>
-                <li role="menuitem" tabindex="-1">Pizza 3</li>
-                <li role="menuitem" tabindex="-1">Pizza 4</li>
-            </ul>
-        </div>
-    </main>
+
+    <h1>Accessible Menu Navigation</h1>
+    <p>Use the <strong>Arrow Up</strong> and <strong>Arrow Down</strong> keys to navigate the menu items.</p>
+
+    <ul id="menu" class="menu" role="menu">
+        <li role="menuitem" tabindex="0">Pizza 1</li>
+        <li role="menuitem" tabindex="-1">Pizza 2</li>
+        <li role="menuitem" tabindex="-1">Pizza 3</li>
+        <li role="menuitem" tabindex="-1">Pizza 4</li>
+    </ul>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuButton = document.getElementById('menubutton1');
-            const menu = document.getElementById('menu1');
-            const menuItems = menu.querySelectorAll('[role="menuitem"]');
-            const output = document.getElementById('action_output');
-            let currentIndex = -1;
-            let isMenuOpen = false;
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuItems = document.querySelectorAll('[role="menuitem"]');
 
-            // Initial setup
-            menu.style.display = 'none';
+            // Function to update tabindex and set focus
+            function updateTabindex(currentIndex, newIndex) {
+                menuItems[currentIndex].setAttribute('tabindex', '-1');
+                menuItems[newIndex].setAttribute('tabindex', '0');
+                menuItems[newIndex].focus();
+            }
 
-            // Menu button click handler
-            menuButton.addEventListener('click', toggleMenu);
-            
-            // Keyboard handler for menu button
-            menuButton.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleMenu();
-                }
+            // Add keydown event listeners
+            menuItems.forEach((item, index) => {
+                item.addEventListener('keydown', (event) => {
+                    let newIndex;
+                    switch (event.key) {
+                        case 'ArrowDown': // Move down in the menu
+                            newIndex = (index + 1) % menuItems.length;
+                            updateTabindex(index, newIndex);
+                            event.preventDefault();
+                            break;
+                        case 'ArrowUp': // Move up in the menu
+                            newIndex = (index - 1 + menuItems.length) % menuItems.length;
+                            updateTabindex(index, newIndex);
+                            event.preventDefault();
+                            break;
+                        case 'Enter': // Simulate selection
+                        case ' ':
+                            alert("Selected: " + item.textContent);
+                            event.preventDefault();
+                            break;
+                        default:
+                            break;
+                    }
+                });
             });
-
-            // Keyboard navigation for menu items
-            menu.addEventListener('keydown', (e) => {
-                if (!isMenuOpen) return;
-
-                switch(e.key) {
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        moveFocus(1);
-                        break;
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        moveFocus(-1);
-                        break;
-                    case 'Enter':
-                        e.preventDefault();
-                        selectItem();
-                        break;
-                    case 'Escape':
-                        e.preventDefault();
-                        closeMenu();
-                        break;
-                }
-            });
-
-            // Function to toggle menu visibility
-            function toggleMenu() {
-                isMenuOpen = !isMenuOpen;
-                menu.style.display = isMenuOpen ? 'block' : 'none';
-                menuButton.setAttribute('aria-expanded', isMenuOpen);
-                
-                if (isMenuOpen) {
-                    currentIndex = -1; // Reset index when opening
-                    moveFocus(1); // Focus first item
-                } else {
-                    menuButton.focus();
-                }
-            }
-
-            // Function to move focus between menu items
-            function moveFocus(direction) {
-                // Remove focus from current item
-                if (currentIndex >= 0) {
-                    menuItems[currentIndex].setAttribute('tabindex', '-1');
-                }
-
-                // Calculate new index
-                currentIndex = currentIndex + direction;
-                
-                // Wrap around if at edges
-                if (currentIndex >= menuItems.length) {
-                    currentIndex = 0;
-                } else if (currentIndex < 0) {
-                    currentIndex = menuItems.length - 1;
-                }
-
-                // Apply focus to new item
-                menuItems[currentIndex].setAttribute('tabindex', '0');
-                menuItems[currentIndex].focus();
-            }
-
-            // Function to select menu item
-            function selectItem() {
-                if (currentIndex >= 0) {
-                    const selectedItem = menuItems[currentIndex].textContent;
-                    output.value = selectedItem;
-                    closeMenu();
-                }
-            }
-
-            // Function to close menu
-            function closeMenu() {
-                isMenuOpen = false;
-                menu.style.display = 'none';
-                menuButton.setAttribute('aria-expanded', 'false');
-                menuButton.focus();
-            }
         });
     </script>
+
 </body>
 </html>
